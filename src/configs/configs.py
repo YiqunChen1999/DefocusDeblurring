@@ -41,7 +41,7 @@ cfg.GENERAL.GPU                                 =   eval(args.gpu)
 # ================================ 
 cfg.MODEL.ARCH                                  =   None # TODO
 cfg.MODEL.ENCODER                               =   "DPDEncoder"
-cfg.MODEL.DECODER                               =   "DPDDncoder"
+cfg.MODEL.DECODER                               =   "DPDDecoder"
 cfg.MODEL.CKPT_DIR                              =   os.path.join(cfg.GENERAL.ROOT, "checkpoints", cfg.GENERAL.ID)
 cfg.MODEL.PATH2CKPT                             =   os.path.join(cfg.MODEL.CKPT_DIR, cfg.GENERAL.ID + ".pth")
 
@@ -97,4 +97,4 @@ for _path in _paths:
     if not os.path.exists(_path):
         os.makedirs(_path)
 
-raise NotImplementedError("Please set your configurations and remove this error message.")
+# raise NotImplementedError("Please set your configurations and remove this error message.")

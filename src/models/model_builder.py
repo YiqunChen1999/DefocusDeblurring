@@ -26,14 +26,14 @@ class Model(nn.Module):
         self._build_model()
 
     def _build_model(self):
-        self.encoder = _ENCODER[self.cfg.MODEL.ENCODER]
-        self.decoder = _DECODER[self.cfg.MODEL.DECODER]
+        self.encoder = _ENCODER[self.cfg.MODEL.ENCODER](self.cfg)
+        self.decoder = _DECODER[self.cfg.MODEL.DECODER](self.cfg)
         self.bottleneck = DPDBottleneck(512, 1024, 0.4)
         
     def forward(self, data, *args, **kwargs):
-        data = self.encoder(data)
-        bottleneck = self.bottleneck(data[-1])
-        out = self.decoder(data.append(bottleneck))
+        enc_1, enc_2, enc_3, enc_4, bottleneck = self.encoder(data)
+        bottleneck = self.bottleneck(bottleneck)
+        out = self.decoder((enc_1, enc_2, enc_3, enc_4, bottleneck))
         return out
 
 

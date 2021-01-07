@@ -35,6 +35,7 @@ class DPDEncoder(nn.Module):
         self.block_2 = self._build_block(2, 64, 128, dropout=0.0)
         self.block_3 = self._build_block(2, 128, 256, dropout=0.0)
         self.block_4 = self._build_block(2, 256, 512, dropout=0.4)
+        self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
     def _build_block(self, num_conv, in_channels, out_channels, dropout=0.0):
         layer_list = []
@@ -42,23 +43,29 @@ class DPDEncoder(nn.Module):
             layer_list.append(
                 ("conv_"+str(idx), nn.Conv2d(in_channels if idx == 0 else out_channels, out_channels, 3, stride=1, padding=1))
             )
-            layer_list.append("relu_"+str(idx), nn.ReLU())
+            layer_list.append(("relu_"+str(idx), nn.ReLU()))
         if dropout:
             layer_list.append(
                 ("dropout", nn.Dropout(dropout))
             )
-        layer_list.append(
-            ("pool", nn.MaxPool2d(kernel_size=2, stride=2))
-        )
         block = nn.Sequential(OrderedDict(layer_list))
         return block
 
     def forward(self, inp):
         enc_1 = self.block_1(inp)
-        enc_2 = self.block_1(enc_1)
-        enc_3 = self.block_1(enc_2)
-        enc_4 = self.block_1(enc_3)
-        return enc_1, enc_2, enc_3, enc_4
+        
+        enc_2 = self.max_pool(enc_1)
+        enc_2 = self.block_2(enc_2)
+
+        enc_3 = self.max_pool(enc_2)
+        enc_3 = self.block_3(enc_3)
+
+        enc_4 = self.max_pool(enc_3)
+        enc_4 = self.block_4(enc_4)
+
+        bottleneck = self.max_pool(enc_4)
+
+        return enc_1, enc_2, enc_3, enc_4, bottleneck
 
 
 @add_encoder

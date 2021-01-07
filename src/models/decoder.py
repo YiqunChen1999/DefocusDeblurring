@@ -42,19 +42,19 @@ class DPDDecoder(nn.Module):
         )
 
     def _build_block(self, num_conv, in_channels, out_channels):
-        block_1 = nn.Sequential(
-            ("upsampling", nn.UpsamplingNearest2d(size=(2, 2))), 
-            ("conv", nn.Conv2d(in_channels, out_channels, 2, stride=1, padding=1))
-        )
+        block_1 = nn.Sequential(OrderedDict([
+            ("upsampling", nn.UpsamplingNearest2d(scale_factor=2)), 
+            ("conv", nn.Conv2d(in_channels, out_channels, 3, stride=1, padding=1))
+        ]))
         layer_list = []
         for idx in range(num_conv):
             layer_list.append(
-                ("conv_"+str(idx), nn.Conv2d(out_channels*2, out_channels, 3, stride=1, padding==1))
+                ("conv_"+str(idx), nn.Conv2d(out_channels*2 if idx == 0 else out_channels, out_channels, 3, stride=1, padding=1))
             )
             layer_list.append(
                 ("relu_"+str(idx), nn.ReLU())
             )
-        block_2 = nn.Sequential(layer_list)
+        block_2 = nn.Sequential(OrderedDict(layer_list))
         return block_1, block_2
 
     def forward(self, inp, *args, **kwargs):
@@ -62,22 +62,22 @@ class DPDDecoder(nn.Module):
         
         # decoder block 1
         out = self.block_1_1(bottleneck)
-        out = torch.cat([out, enc_4])
+        out = torch.cat([out, enc_4], dim=1)
         out = self.block_1_2(out)
 
         # decoder block 2
         out = self.block_2_1(out)
-        out = torch.cat([out, enc_3])
+        out = torch.cat([out, enc_3], dim=1)
         out = self.block_2_2(out)
 
         # decoder block 3
         out = self.block_3_1(out)
-        out = torch.cat([out, enc_2])
+        out = torch.cat([out, enc_2], dim=1)
         out = self.block_3_2(out)
 
         # decoder block 4
         out = self.block_4_1(out)
-        out = torch.cat([out, enc_1])
+        out = torch.cat([out, enc_1], dim=1)
         out = self.block_4_2(out)
         
         out = self.out_block(out)
