@@ -17,7 +17,7 @@ from tqdm import tqdm
 from utils import utils
 
 @utils.log_info_wrapper("Start train model.")
-@torch.no_grad()
+@torch.enable_grad()
 def train_one_epoch(
     epoch: int, 
     model: torch.nn.Module, 
@@ -37,9 +37,9 @@ def train_one_epoch(
     total_loss = []
     # TODO  Read data and train and record info.
     with utils.log_info(msg="Train at epoch: {}".format(str(epoch).zfill(3)), level="INFO", state=True, logger=logger):
-        for idx, data, anno in enumerate(data_loader):
+        for idx, data in enumerate(data_loader):
             optimizer.zero_grad()
-            out, loss = utils.inference_and_cal_loss(model=model, inp=data, anno=anno, loss_fn=loss_fn)
+            out, loss = utils.inference_and_cal_loss(model=model, data=data, loss_fn=loss_fn, device=device)
             loss.backward()
             optimizer.step()
             total_loss.append(loss.detach().cpu().item())
@@ -48,4 +48,4 @@ def train_one_epoch(
         lr_scheduler.step()
         pbar.close()
     # TODO  Return some info.
-    raise NotImplementedError("Function train_one_epoch is not implemented yet.")
+    # raise NotImplementedError("Function train_one_epoch is not implemented yet.")

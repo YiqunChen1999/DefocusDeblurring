@@ -37,8 +37,7 @@ class Model(nn.Module):
         return out
 
 
-@utils.log_info_wrapper("Build model from configurations.")
 def build_model(cfg, logger=None):
-    log_info = print if logger is None else logger.log_info
-    model = Model(cfg)
+    with utils.log_info(msg="Build model from configurations.", level="INFO", state=True, logger=logger):
+        model = Model(cfg)
     return model

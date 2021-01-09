@@ -20,14 +20,18 @@ def add_optimizer(optim_func):
     return optim_func
 
 @add_optimizer
-def SGD(model, cfg):
+def SGD(cfg, model):
     lr = cfg.OPTIMIZER.LR
     momentum = cfg.OPTIMIZER.MOMENTUM if cfg.OPTIMIZER.hasattr("MOMENTUM") else 0
     dampening = cfg.OPTIMIZER.DAMPENING if cfg.OPTIMIZER.hasattr("DAMPENING") else 0
     weight_decay = cfg.OPTIMIZER.WEIGHT_DECAY if cfg.OPTIMIZER.hasattr("WEIGHT_DECAY") else 0
     nesterov = cfg.OPTIMIZER.NESTEROV if cfg.OPTIMIZER.hasattr("NESTEROV") else False
     optimizer = torch.optim.SGD(
-        params=model.parameters(), 
+        [
+            {"params": model.encoder.parameters(), "lr": lr}, 
+            {"params": model.decoder.parameters(), "lr": lr}, 
+            {"params": model.backbone.parameters(), "lr": lr}, 
+        ], 
         lr=lr, 
         momentum=momentum, 
         dampening=dampening, 
@@ -38,23 +42,28 @@ def SGD(model, cfg):
     return optimizer
 
 @add_optimizer
-def Adam(model):
+def Adam(cfg, model):
     lr = cfg.OPTIMIZER.LR
     weight_decay = cfg.OPTIMIZER.WEIGHT_DECAY if cfg.OPTIMIZER.hasattr("WEIGHT_DECAY") else 0
     betas = cfg.OPTIMIZER.BETAS if cfg.OPTIMIZER.hasattr("BETAS") else (0.9, 0.999)
     eps = cfg.OPTIMIZER.EPS if cfg.OPTIMIZER.hasattr("EPS") else 1E-8
     amsgrad = cfg.OPTIMIZER.AMSGRAD if cfg.OPTIMIZER.hasattr("AMSGRAD") else False
     optimizer = torch.optim.Adam(
-        params=model.parameters(), 
+        [
+            {"params": model.encoder.parameters(), "lr": lr}, 
+            {"params": model.decoder.parameters(), "lr": lr}, 
+            {"params": model.bottleneck.parameters(), "lr": lr}, 
+        ], 
         lr=lr, 
         betas=betas, 
         eps=eps, 
         weight_decay=weight_decay, 
         amsgrad=amsgrad, 
     )
-    raise NotImplementedError("Optimizer Adam is not implemented yet.")
+    # raise NotImplementedError("Optimizer Adam is not implemented yet.")
     return optimizer
 
-def build_optimizer(cfg, *args, **kwargs):
-    optimizer = _OPTIMIZER[cfg.OPTIMIZER.OPTIMIZER](model, cfg)
-    raise NotImplementedError("Function build_optimizer is not implemented.")
+def build_optimizer(cfg, model, *args, **kwargs):
+    optimizer = _OPTIMIZER[cfg.OPTIMIZER.OPTIMIZER](cfg, model)
+    # raise NotImplementedError("Function build_optimizer is not implemented.")
+    return optimizer

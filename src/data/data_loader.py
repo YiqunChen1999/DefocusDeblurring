@@ -30,3 +30,4 @@ def build_data_loader(cfg, dataset, split):
         shuffle=shuffle, 
         num_workers=num_workers
     )
+    return data_loader

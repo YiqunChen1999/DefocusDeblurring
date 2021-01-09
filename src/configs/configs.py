@@ -26,7 +26,7 @@ args = parser.parse_args()
 # ================================ 
 # GENERAL
 # ================================ 
-cfg.GENERAL.ROOT                                =   os.path.join(os.getcwd(), "..", "..")
+cfg.GENERAL.ROOT                                =   os.path.join(os.getcwd(), ".")
 cfg.GENERAL.ID                                  =   "{}".format(args.id)
 cfg.GENERAL.STRICT_ID                           =   True if args.strict_id == "true" else False
 cfg.GENERAL.BATCH_SIZE                          =   args.batch_size
@@ -48,7 +48,9 @@ cfg.MODEL.PATH2CKPT                             =   os.path.join(cfg.MODEL.CKPT_
 # ================================ 
 # DATA
 # ================================ 
-cfg.DATA.DIR                                    =   ""
+cfg.DATA.DIR                                    =   {
+    "DualPixelNTIRE2021": "/mnt/g/Datasets/DualPixelNTIRE2021", 
+}
 cfg.DATA.NUMWORKERS                             =   args.batch_size
 cfg.DATA.DATASET                                =   "DualPixelNTIRE2021"
 
@@ -62,6 +64,8 @@ cfg.OPTIMIZER.LR                                =   2e-5
 # SCHEDULER
 # ================================ 
 cfg.SCHEDULER.SCHEDULER                         =   "StepLRScheduler"
+cfg.SCHEDULER.UPDATE_EPOCH                      =   range(60, 200, 60)
+cfg.SCHEDULER.UPDATE_SCALE                      =   0.5
 
 # ================================ 
 # SCHEDULER
@@ -92,6 +96,7 @@ _paths = [
     cfg.MODEL.CKPT_DIR, 
     cfg.SAVE.DIR, 
 ]
+_paths.extend(list(cfg.DATA.DIR.as_dict().values()))
 
 for _path in _paths:
     if not os.path.exists(_path):

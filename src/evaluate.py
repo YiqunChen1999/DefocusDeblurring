@@ -17,7 +17,7 @@ from tqdm import tqdm
 from utils import utils, metrics
 
 @utils.log_info_wrapper("Start evaluate model.")
-@torch.enable_grad()
+@torch.no_grad()
 def evaluate(
     epoch: int, 
     model: torch.nn.Module, 
@@ -37,8 +37,8 @@ def evaluate(
     # TODO  Read data and evaluate and record info.
     with utils.log_info(msg="Evaluate at epoch: {}".format(str(epoch).zfill(3)), level="INFO", state=True, logger=logger):
         log_info("Will{}save results to {}".format(" " if save else " not ", cfg.SAVE.DIR))
-        for idx, data, anno in enumerate(data_loader):
-            out, loss = utils.inference_and_cal_loss(model=model, inp=data, anno=anno, loss_fn=loss_fn)
+        for idx, data in enumerate(data_loader):
+            out, loss = utils.inference_and_cal_loss(model=model, data=data, loss_fn=loss_fn, device=device)
             total_loss.append(loss.detach().cpu().item())
             if save:
                 # TODO Save results to directory.
@@ -47,5 +47,5 @@ def evaluate(
             pbar.update()
         pbar.close()
     # TODO  Return some info.
-    raise NotImplementedError("Function evaluate is not implemented yet.")
+    # raise NotImplementedError("Function evaluate is not implemented yet.")
 

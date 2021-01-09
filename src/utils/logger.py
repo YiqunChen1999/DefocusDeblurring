@@ -15,12 +15,11 @@ class Logger:
     def __init__(self, cfg, *args, **kwargs):
         self.cfg = cfg
         self.path2logfile = os.path.join(cfg.LOG.DIR, "{}.log".format(cfg.GENERAL.ID))
-        logging.basicConfig(filename=self.path2logfile, encoding='utf-8', level=logging.DEBUG, format='[%(asctime)s] %(message)s')
+        logging.basicConfig(filename=self.path2logfile, level=logging.INFO, format='[%(asctime)s] %(message)s')
 
     def log_info(self, msg):
         logging.info(msg)
-        msg = "[{:<20}] [{:<8}] {}".format(time.asctime(), "INFO", msg)
         print(msg)
-        raise NotImplementedError("Method Logger.log_info is not implemented yet.")
+        # raise NotImplementedError("Method Logger.log_info is not implemented yet.")
 
 
