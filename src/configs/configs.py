@@ -53,6 +53,9 @@ cfg.DATA.DIR                                    =   {
 }
 cfg.DATA.NUMWORKERS                             =   args.batch_size
 cfg.DATA.DATASET                                =   "DualPixelNTIRE2021"
+cfg.DATA.BIT_DEPTH                              =   16
+cfg.DATA.MEAN                                   =   [0, 0, 0]
+cfg.DATA.NORM                                   =   [2**cfg.DATA.BIT_DEPTH-1, 2**cfg.DATA.BIT_DEPTH-1, 2**cfg.DATA.BIT_DEPTH-1]
 
 # ================================ 
 # OPTIMIZER

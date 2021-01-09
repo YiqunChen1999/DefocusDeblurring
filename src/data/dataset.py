@@ -12,7 +12,9 @@ sys.path.append(os.path.join(os.getcwd(), "src"))
 import torch, torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
+# PIL.Image seems cannot read 16-bit .png file.
+# from PIL import Image
+import cv2
 import numpy as np
 
 from utils import utils
@@ -84,17 +86,18 @@ class DualPixelCanon(torch.utils.data.Dataset):
         raise NotImplementedError("Method DualPixelCanon._preprocess is not implemented yet.")
 
     def __getitem__(self, idx):
-        target = np.array(Image.open(os.path.join(self.path2imgs, "target", self.data[idx]["target"])))
-        source = np.array(Image.open(os.path.join(self.path2imgs, "source", self.data[idx]["source"])))
-        l_img = np.array(Image.open(os.path.join(self.path2imgs, "l_view", self.data[idx]["l_view"])))
-        r_img = np.array(Image.open(os.path.join(self.path2imgs, "r_view", self.data[idx]["r_view"])))
-
+        target = cv2.imread(os.path.join(self.path2imgs, "target", self.data[idx]["target"]), -1)
+        source = cv2.imread(os.path.join(self.path2imgs, "source", self.data[idx]["source"]), -1)
+        l_img = cv2.imread(os.path.join(self.path2imgs, "l_view", self.data[idx]["l_view"]), -1)
+        r_img = cv2.imread(os.path.join(self.path2imgs, "r_view", self.data[idx]["r_view"]), -1)
+        
         data = {}
         # Transform: [H, W, C] -> [C, H, W]
-        data["target"] = np.transpose(target, (2, 0, 1))
-        data["source"] = np.transpose(source, (2, 0, 1))
-        data["l_view"] = np.transpose(l_img, (2, 0, 1))
-        data["r_view"] = np.transpose(r_img, (2, 0, 1))
+        data["target"] = np.transpose((target-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
+        data["source"] = np.transpose((source-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
+        data["l_view"] = np.transpose((l_img-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
+        data["r_view"] = np.transpose((r_img-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
+        
         return data
         raise NotImplementedError("Method DualPixelCanon.__getitem__ is not implemented yet.")
 
@@ -159,14 +162,14 @@ class DualPixelNTIRE2021(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         data = {}
-        target = np.array(Image.open(os.path.join(self.path2imgs, "target", self.data[idx]["target"])), dtype=np.float32)
-        l_img = np.array(Image.open(os.path.join(self.path2imgs, "l_view", self.data[idx]["l_view"])), dtype=np.float32)
-        r_img = np.array(Image.open(os.path.join(self.path2imgs, "r_view", self.data[idx]["r_view"])), dtype=np.float32)
+        target = cv2.imread(os.path.join(self.path2imgs, "target", self.data[idx]["target"]), -1)
+        l_img = cv2.imread(os.path.join(self.path2imgs, "l_view", self.data[idx]["l_view"]), -1)
+        r_img = cv2.imread(os.path.join(self.path2imgs, "r_view", self.data[idx]["r_view"]), -1)
 
         # Transform: [H, W, C] -> [C, H, W]
-        data["target"] = np.transpose(target, (2, 0, 1))
-        data["l_view"] = np.transpose(l_img, (2, 0, 1))
-        data["r_view"] = np.transpose(r_img, (2, 0, 1))
+        data["target"] = np.transpose((target-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
+        data["l_view"] = np.transpose((l_img-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
+        data["r_view"] = np.transpose((r_img-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
 
         return data
         

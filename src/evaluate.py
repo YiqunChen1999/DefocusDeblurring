@@ -24,6 +24,8 @@ def evaluate(
     data_loader: torch.utils.data.DataLoader, 
     device: torch.device, 
     loss_fn, 
+    metrics_logger, 
+    phase="valid", 
     logger=None, 
     save=False, 
     *args, 
@@ -43,9 +45,19 @@ def evaluate(
             if save:
                 # TODO Save results to directory.
                 pass
-            pbar.set_description("Epoch: {:<3}, loss: {:<5}".format(epoch, sum(total_loss)/len(total_loss)))
+            
+            metrics_logger.record(phase, epoch, "loss", loss.detach().cpu().item())
+            output = out.detach().cpu()
+            target = data["target"]
+            utils.cal_and_record_metrics(phase, epoch, output, target, metrics_logger, logger=logger)
+
+            pbar.set_description("Epoch: {:<3}, avg loss: {:<5}, cur loss: {:<5}".format(epoch, sum(total_loss)/len(total_loss), total_loss[-1]))
             pbar.update()
         pbar.close()
+    mean_metrics = metrics_logger.mean("train", epoch)
+    log_info("SSIM: {:<5}, PSNR: {:<5}, MAE: {:<5}, Loss: {:<5}".format(
+        mean_metrics["SSIM"], mean_metrics["PSNR"], mean_metrics["MAE"], mean_metrics["loss"], 
+    ))
     # TODO  Return some info.
     # raise NotImplementedError("Function evaluate is not implemented yet.")
 

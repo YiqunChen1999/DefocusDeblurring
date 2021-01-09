@@ -16,6 +16,7 @@ from models import model_builder
 from data import data_loader
 from train import train_one_epoch
 from evaluate import evaluate
+from utils.metrics import Metrics
 
 def main():
     # raise NotImplementedError("Function main is not implemented yet, please finish your code and \
@@ -24,9 +25,11 @@ def main():
     # TODO Set logger to record information.
     logger = Logger(cfg)
     logger.log_info(cfg)
+    metrics_logger = Metrics()
     utils.pack_code(cfg, logger=logger)
     # TODO Build model.
     model = model_builder.build_model(cfg=cfg, logger=logger)
+    # logger.log_model(model)
     # TODO Read checkpoint.
     ckpt = torch.load(cfg.MODEL.PATH2CKPT) if cfg.GENERAL.RESUME else {}
     # TODO Load pre-trained model.
@@ -57,6 +60,7 @@ def main():
             loss_fn=loss_fn, 
             optimizer=optimizer, 
             lr_scheduler=lr_scheduler, 
+            metrics_logger=metrics_logger, 
             logger=logger, 
         )
         utils.save_ckpt(
@@ -75,6 +79,8 @@ def main():
                 data_loader=valid_data_loader, 
                 device=device, 
                 loss_fn=loss_fn, 
+                metrics_logger=metrics_logger, 
+                phase="valid", 
                 logger=logger,
                 save=cfg.SAVE.SAVE,  
             )

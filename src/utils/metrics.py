@@ -6,30 +6,87 @@ Docs:
     Metrics.
 """
 
-import skimage, math, sklearn
+import copy, skimage, math, sklearn
 import numpy as np
+from sklearn import metrics
+from skimage import metrics
 
-def cal_mae(y_true, y_pred, sample_weight=None, multioutput='uniform_average'):
-    mae_0 = sklearn.metrics.mean_absolute_error(img1[:,:,0], img2[:,:,0], sample_weight=sample_weight, multioutput=multioutput)
-    mae_1 = sklearn.metrics.mean_absolute_error(img1[:,:,1], img2[:,:,1], sample_weight=sample_weight, multioutput=multioutput)
-    mae_2 = sklearn.metrics.mean_absolute_error(img1[:,:,2], img2[:,:,2], sample_weight=sample_weight, multioutput=multioutput)
+def cal_mae(y_true, y_pred, *args, **kwargs):
+    mae_0 = sklearn.metrics.mean_absolute_error(y_true[0,:,:], y_pred[0,:,:])
+    mae_1 = sklearn.metrics.mean_absolute_error(y_true[1,:,:], y_pred[1,:,:])
+    mae_2 = sklearn.metrics.mean_absolute_error(y_true[2,:,:], y_pred[2,:,:])
     return np.mean([mae_0,mae_1,mae_2])
 
-def cal_psnr(image_true, image_test, data_range=None):
-    psnr = skimage.metrics.peak_signal_noise_ratio(image_true, image_test, data_range=None)
+def cal_psnr(image_true, image_test, data_range=None, *args, **kwargs):
+    psnr = skimage.metrics.peak_signal_noise_ratio(image_true, image_test, data_range=data_range)
     return psnr
     
 def cal_ssim(
     im1, 
     im2, 
-    win_size=None, 
-    gradient=False, 
     data_range=None, 
-    multichannel=False, 
-    gaussian_weights=False, 
-    full=False, 
+    multichannel=True, 
+    *args, 
     **kwargs
 ):
-    ssim = skimage.metrics.structural_similarity(img1, img2, win_size=win_size, gradient=gradient, data_range=PIXEL_MAX, multichannel=True, gaussian_weights=False, full=False)
+    if im1.shape[0] == 3:
+        im1 = np.transpose(im1, (1, 2, 0))
+        im2 = np.transpose(im2, (1, 2, 0))
+    ssim = skimage.metrics.structural_similarity(im1, im2, data_range=data_range, multichannel=multichannel)
     return ssim
+
+
+class Metrics:
+    def __init__(self):
+        self.metrics = {}
+
+    def record(self, phase, epoch, item, value):
+        if phase not in self.metrics.keys():
+            self.metrics[phase] = {}
+        if epoch not in self.metrics[phase].keys():
+            self.metrics[phase][epoch] = {}
+        if item not in self.metrics[phase][epoch].keys():
+            self.metrics[phase][epoch][item] = []
+        self.metrics[phase][epoch][item].append(value)
+
+    def get_metrics(self, phase=None, epoch=None, item=None):
+        metrics = copy.deepcopy(self.metrics)
+        if phase is not None:
+            metrics = {phase: metrics[phase]}
+        if epoch is not None:
+            for _p in metrics.keys():
+                metrics[_p] = {epoch: metrics[_p][epoch]}
+        if item is not None:
+            for _p in metrics.keys():
+                for _e in metrics[_p].keys():
+                    metrics[_p][_e] = {item: metrics[_p][_e][item]}
+        return metrics
+
+    def mean(self, phase, epoch, item=None):
+        mean_metrics = {}
+        metrics = self.get_metrics(phase=phase, epoch=epoch, item=item)
+        metrics = metrics[phase][epoch]
+        for key, value in metrics.items():
+            mean_metrics[key] = np.mean(np.array(value))
+        return mean_metrics
+
+    def cal_metrics(self, phase, epoch, *args, **kwargs):
+        mae = cal_mae(*args, **kwargs)
+        ssim = cal_ssim(*args, **kwargs)
+        psnr = cal_psnr(*args, **kwargs)
+        self.record(phase, epoch, "MAE", mae)
+        self.record(phase, epoch, "SSIM", ssim)
+        self.record(phase, epoch, "PSNR", psnr)
+        return mae, ssim, psnr
+
+
+if __name__ == "__main__":
+    metrics_logger = Metrics()
+    for phase in ["train", "valid", "test"]:
+        for epoch in range(20):
+            for item in ["mse", "psnr", "ssim"]:
+                metrics_logger.record(phase, epoch, item, np.random.randn(1))
+    metrics_logger.get_metrics()
+    print(metrics_logger.mean("train", 0, item=None))
+        
 

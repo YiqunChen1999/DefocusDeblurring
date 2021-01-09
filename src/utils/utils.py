@@ -63,6 +63,14 @@ def inference_and_cal_loss(model, data, loss_fn, device):
     #     please rewrite the demo code and delete this error message.")
     return out, loss
 
+def cal_and_record_metrics(phase, epoch, output, target, metrics_logger, logger=None):
+    output = output.detach().cpu().numpy()
+    target = target.detach().cpu().numpy()
+    batch_size = output.shape[0]
+    for idx in range(batch_size):
+        metrics_logger.cal_metrics(phase, epoch, target[idx], output[idx], data_range=1)
+    
+
 def resize(img: torch.Tensor, size: list or tuple, logger=None):
     """
     Info:
