@@ -52,6 +52,7 @@ def main():
     for epoch in range(cfg.TRAIN.MAX_EPOCH):
         if resume_epoch > epoch:
             continue
+
         train_one_epoch(
             epoch=epoch, 
             model=model, 
@@ -69,7 +70,7 @@ def main():
             model=model.state_dict(), 
             epoch=epoch, 
             optimizer=optimizer, 
-            lr_scheduler=lr_scheduler, 
+            # lr_scheduler=lr_scheduler, # something is wrong when pickle lr_scheduler
             loss_fn=loss_fn, 
         )
         try:
