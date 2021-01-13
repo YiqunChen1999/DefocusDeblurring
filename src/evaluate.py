@@ -34,11 +34,11 @@ def evaluate(
     model.eval()
     # TODO  Prepare to log info.
     log_info = print if logger is None else logger.log_info
-    pbar = tqdm(total=len(data_loader))
     total_loss = []
     # TODO  Read data and evaluate and record info.
     with utils.log_info(msg="Evaluate at epoch: {}".format(str(epoch).zfill(3)), level="INFO", state=True, logger=logger):
-        log_info("Will{}save results to {}".format(" " if save else " not ", cfg.SAVE.DIR))
+        # log_info("Will{}save results to {}".format(" " if save else " not ", cfg.SAVE.DIR))
+        pbar = tqdm(total=len(data_loader), dynamic_ncols=True)
         for idx, data in enumerate(data_loader):
             out, loss = utils.inference_and_cal_loss(model=model, data=data, loss_fn=loss_fn, device=device)
             total_loss.append(loss.detach().cpu().item())
@@ -51,10 +51,10 @@ def evaluate(
             target = data["target"]
             utils.cal_and_record_metrics(phase, epoch, output, target, metrics_logger, logger=logger)
 
-            pbar.set_description("Epoch: {:<3}, avg loss: {:<5}, cur loss: {:<5}".format(epoch, sum(total_loss)/len(total_loss), total_loss[-1]))
+            pbar.set_description("Epoch: {:<3}, avg loss: {:<5}, cur loss: {:<5}".format(epoch, round(sum(total_loss)/len(total_loss), 5), round(total_loss[-1], 5)))
             pbar.update()
         pbar.close()
-    mean_metrics = metrics_logger.mean("train", epoch)
+    mean_metrics = metrics_logger.mean("valid", epoch)
     log_info("SSIM: {:<5}, PSNR: {:<5}, MAE: {:<5}, Loss: {:<5}".format(
         mean_metrics["SSIM"], mean_metrics["PSNR"], mean_metrics["MAE"], mean_metrics["loss"], 
     ))

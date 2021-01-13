@@ -49,13 +49,15 @@ cfg.MODEL.PATH2CKPT                             =   os.path.join(cfg.MODEL.CKPT_
 # DATA
 # ================================ 
 cfg.DATA.DIR                                    =   {
-    "DualPixelNTIRE2021": "/mnt/g/Datasets/DualPixelNTIRE2021", 
+    "DualPixelNTIRE2021": "/home/yqchen/Data/DualPixelNTIRE2021", 
+    "DualPixelCanon": "/home/yqchen/Data/DualPixelCanon", 
 }
 cfg.DATA.NUMWORKERS                             =   args.batch_size
-cfg.DATA.DATASET                                =   "DualPixelNTIRE2021"
+cfg.DATA.DATASET                                =   "DualPixelCanon"
 cfg.DATA.BIT_DEPTH                              =   16
 cfg.DATA.MEAN                                   =   [0, 0, 0]
 cfg.DATA.NORM                                   =   [2**cfg.DATA.BIT_DEPTH-1, 2**cfg.DATA.BIT_DEPTH-1, 2**cfg.DATA.BIT_DEPTH-1]
+cfg.DATA.PREFETCH                               =   False
 
 # ================================ 
 # OPTIMIZER

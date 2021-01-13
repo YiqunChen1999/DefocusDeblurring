@@ -19,8 +19,6 @@ from evaluate import evaluate
 from utils.metrics import Metrics
 
 def main():
-    # raise NotImplementedError("Function main is not implemented yet, please finish your code and \
-    #     remove this error message.")
     # TODO Read configuration.
     # TODO Set logger to record information.
     logger = Logger(cfg)
