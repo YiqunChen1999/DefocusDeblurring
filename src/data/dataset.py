@@ -95,6 +95,7 @@ class DualPixelCanon(torch.utils.data.Dataset):
                 self.l_img_list.append(cv2.imread(os.path.join(self.path2imgs, "l_view", l_img_dict[img_idx]), -1))
                 self.r_img_list.append(cv2.imread(os.path.join(self.path2imgs, "r_view", r_img_dict[img_idx]), -1))
             pbar.update()
+        pbar.close()
         # self._preprocess()
         # raise NotImplementedError("Method DualPixelCanon._build is not implemented yet.")
 
@@ -114,6 +115,7 @@ class DualPixelCanon(torch.utils.data.Dataset):
             l_img = cv2.imread(os.path.join(self.path2imgs, "l_view", self.data[idx]["l_view"]), -1)
             r_img = cv2.imread(os.path.join(self.path2imgs, "r_view", self.data[idx]["r_view"]), -1)
 
+        data["img_idx"] = self.data[idx]["img_idx"]
         # Transform: [H, W, C] -> [C, H, W]
         data["target"] = np.transpose((target-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
         data["source"] = np.transpose((source-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
@@ -177,17 +179,26 @@ class DualPixelNTIRE2021(torch.utils.data.Dataset):
             if img_idx == "":
                 continue
             if img_idx in l_img_dict.keys() and img_idx in r_img_dict.keys():
-                self.data.append({
-                    "img_idx": img_idx, 
-                    "target": t_img_dict[img_idx], 
-                    "l_view": l_img_dict[img_idx], 
-                    "r_view": r_img_dict[img_idx], 
-                })
+                if self.split in ["train"]:
+                    self.data.append({
+                        "img_idx": img_idx, 
+                        "target": t_img_dict[img_idx], 
+                        "l_view": l_img_dict[img_idx], 
+                        "r_view": r_img_dict[img_idx], 
+                    })
+                else:
+                    self.data.append({
+                        "img_idx": img_idx, 
+                        "l_view": l_img_dict[img_idx], 
+                        "r_view": r_img_dict[img_idx], 
+                    })
             if self.cfg.DATA.PREFETCH:
-                self.t_img_list.append(cv2.imread(os.path.join(self.path2imgs, "target", t_img_dict[img_idx]), -1))
+                if self.split ["train"]:
+                    self.t_img_list.append(cv2.imread(os.path.join(self.path2imgs, "target", t_img_dict[img_idx]), -1))
                 self.l_img_list.append(cv2.imread(os.path.join(self.path2imgs, "l_view", l_img_dict[img_idx]), -1))
                 self.r_img_list.append(cv2.imread(os.path.join(self.path2imgs, "r_view", r_img_dict[img_idx]), -1))
             pbar.update()
+        pbar.close()
         # self._preprocess()
         # raise NotImplementedError("Method DualPixelNTIRE2021._build is not implemented yet.")
 
@@ -198,16 +209,20 @@ class DualPixelNTIRE2021(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         data = {}
         if self.cfg.DATA.PREFETCH:
-            target = self.t_img_list[idx]
+            if self.split in ["train"]:
+                target = self.t_img_list[idx]
             l_img = self.l_img_list[idx]
             r_img = self.r_img_list[idx]
         else:
-            target = cv2.imread(os.path.join(self.path2imgs, "target", self.data[idx]["target"]), -1)
+            if self.split in ["train"]:
+                target = cv2.imread(os.path.join(self.path2imgs, "target", self.data[idx]["target"]), -1)
             l_img = cv2.imread(os.path.join(self.path2imgs, "l_view", self.data[idx]["l_view"]), -1)
             r_img = cv2.imread(os.path.join(self.path2imgs, "r_view", self.data[idx]["r_view"]), -1)
 
+        data["img_idx"] = self.data[idx]["img_idx"]
         # Transform: [H, W, C] -> [C, H, W]
-        data["target"] = np.transpose((target-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
+        if self.split in ["train"]:
+            data["target"] = np.transpose((target-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
         data["l_view"] = np.transpose((l_img-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
         data["r_view"] = np.transpose((r_img-np.array(self.cfg.DATA.MEAN))/np.array(self.cfg.DATA.NORM), (2, 0, 1)).astype(np.float32)
 

@@ -3,7 +3,7 @@
 Author:
     Yiqun Chen
 Docs:
-    Functions to train a model.
+    Functions to evaluate a model.
 """
 
 import os, sys
@@ -20,6 +20,7 @@ from utils import utils, metrics
 @torch.no_grad()
 def evaluate(
     epoch: int, 
+    cfg, 
     model: torch.nn.Module, 
     data_loader: torch.utils.data.DataLoader, 
     device: torch.device, 
@@ -36,15 +37,23 @@ def evaluate(
     log_info = print if logger is None else logger.log_info
     total_loss = []
     # TODO  Read data and evaluate and record info.
-    with utils.log_info(msg="Evaluate at epoch: {}".format(str(epoch).zfill(3)), level="INFO", state=True, logger=logger):
+    with utils.log_info(msg="{} at epoch: {}".format(phase.upper(), str(epoch).zfill(3)), level="INFO", state=True, logger=logger):
         # log_info("Will{}save results to {}".format(" " if save else " not ", cfg.SAVE.DIR))
         pbar = tqdm(total=len(data_loader), dynamic_ncols=True)
         for idx, data in enumerate(data_loader):
             out, loss = utils.inference_and_cal_loss(model=model, data=data, loss_fn=loss_fn, device=device)
             total_loss.append(loss.detach().cpu().item())
+
             if save:
-                # TODO Save results to directory.
-                pass
+                # Save results to directory.
+                for i in range(out.shape[0]):
+                    save_dir = os.path.join(cfg.SAVE.DIR, phase)
+                    if not os.path.exists(save_dir):
+                        os.makedirs(save_dir)
+                    path2file = os.path.join(save_dir, data["img_idx"][i]+"_g.png")
+                    succeed = utils.save_image(out[i].detach().cpu().numpy(), cfg.DATA.MEAN, cfg.DATA.NORM, path2file)
+                    if not succeed:
+                        log_info("Cannot save image to {}".format(path2file))
             
             metrics_logger.record(phase, epoch, "loss", loss.detach().cpu().item())
             output = out.detach().cpu()

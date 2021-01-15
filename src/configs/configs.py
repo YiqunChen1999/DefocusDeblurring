@@ -17,7 +17,7 @@ parser.add_argument("id", type=str)
 parser.add_argument("strict_id", default="true", choices=["true", "false"], type=str)
 parser.add_argument("batch_size", type=int)
 parser.add_argument("train", default="true", choices=["true", "false"], type=str)
-parser.add_argument("eval", default="true", choices=["true", "false"], type=str)
+parser.add_argument("valid", default="true", choices=["true", "false"], type=str)
 parser.add_argument("test", default="false", choices=["true", "false"], type=str)
 parser.add_argument("resume", default="false", choices=["true", "false"], type=str)
 parser.add_argument("gpu", type=str)
@@ -31,7 +31,7 @@ cfg.GENERAL.ID                                  =   "{}".format(args.id)
 cfg.GENERAL.STRICT_ID                           =   True if args.strict_id == "true" else False
 cfg.GENERAL.BATCH_SIZE                          =   args.batch_size
 cfg.GENERAL.TRAIN                               =   True if args.train == "true" else False
-cfg.GENERAL.EVAL                                =   True if args.eval == "true" else False
+cfg.GENERAL.VALID                               =   True if args.valid == "true" else False
 cfg.GENERAL.TEST                                =   True if args.test == "true" else False
 cfg.GENERAL.RESUME                              =   True if args.resume == "true" else False
 cfg.GENERAL.GPU                                 =   eval(args.gpu)
@@ -49,11 +49,12 @@ cfg.MODEL.PATH2CKPT                             =   os.path.join(cfg.MODEL.CKPT_
 # DATA
 # ================================ 
 cfg.DATA.DIR                                    =   {
-    "DualPixelNTIRE2021": "/home/yqchen/Data/DualPixelNTIRE2021", 
-    "DualPixelCanon": "/home/yqchen/Data/DualPixelCanon", 
+    # "DualPixelNTIRE2021": "/home/yqchen/Data/DualPixelNTIRE2021", 
+    "DualPixelNTIRE2021": "/mnt/g/Datasets/DualPixelNTIRE2021", 
+    # "DualPixelCanon": "/home/yqchen/Data/DualPixelCanon", 
 }
 cfg.DATA.NUMWORKERS                             =   args.batch_size
-cfg.DATA.DATASET                                =   "DualPixelCanon"
+cfg.DATA.DATASET                                =   "DualPixelNTIRE2021"
 cfg.DATA.BIT_DEPTH                              =   16
 cfg.DATA.MEAN                                   =   [0, 0, 0]
 cfg.DATA.NORM                                   =   [2**cfg.DATA.BIT_DEPTH-1, 2**cfg.DATA.BIT_DEPTH-1, 2**cfg.DATA.BIT_DEPTH-1]
@@ -86,7 +87,7 @@ cfg.LOSS_FN.LOSS_FN                             =   "MSELoss"
 # LOG
 # ================================ 
 cfg.SAVE.DIR                                    =   os.path.join(os.path.join(cfg.GENERAL.ROOT, "results", cfg.GENERAL.ID))
-cfg.SAVE.SAVE                                   =   False
+cfg.SAVE.SAVE                                   =   True
 
 # ================================ 
 # LOG

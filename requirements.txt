@@ -3,5 +3,5 @@ numpy==1.19.2
 scikit-image==0.17.2
 scikit-learn==0.23.2
 tqdm==4.55.1
-attribdict>=0.0.4
+attribdict>=0.0.5
 tensorboard==2.4.0

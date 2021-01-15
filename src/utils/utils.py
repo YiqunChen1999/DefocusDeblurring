@@ -10,6 +10,8 @@ import os, sys, copy, functools, time, contextlib
 import torch, torchvision
 import torch.nn.functional as F
 from PIL import Image
+import numpy as np
+import cv2
 
 @contextlib.contextmanager
 def log_info(msg="", level="INFO", state=False, logger=None):
@@ -40,27 +42,40 @@ def log_info_wrapper(msg, logger=None):
         return wrapped_func
     return func_wraper
 
+def inference(model, data, device):
+    """
+    Info:
+        Inference once, without calculate any loss.
+    Args:
+        - model (nn.Module):
+        - data (dict): necessary keys: "l_view", "r_view"
+        - device (torch.device)
+    Returns:
+        - out (Tensor): predicted.
+    """
+    l_view, r_view = data["l_view"], data["r_view"]
+    assert len(l_view.shape) == len(r_view.shape) == 4, "Incorrect shape."
+    inp = torch.cat([l_view, r_view], dim=1)
+    inp = inp.to(device)
+    out = model(inp)
+    return out
+
 def inference_and_cal_loss(model, data, loss_fn, device):
     """
     Info:
         Execute inference and calculate loss, sychronize the train and evaluate progress. 
     Args:
-        - model (nn.Module): model with train or eval mode setted.
-        - inp (dict): organize input data into a dictionary.
-        - anno (FIXME): ground truth, used to calculate loss.
-        - loss_fn (FIXME): calculate loss.
+        - model (nn.Module):
+        - data (dict): necessary keys: "l_view", "r_view"
+        - loss_fn (callable): function or callable instance.
+        - device (torch.device)
     Returns:
-        - out (FIXME): the output of the model.
+        - out (Tensor): predicted.
         - loss (Tensor): calculated loss.
     """
-    l_view, r_view, target = data["l_view"], data["r_view"], data["target"]
-    assert len(l_view.shape) == len(r_view.shape) == len(target.shape) == 4, "Incorrect shape."
-    inp = torch.cat([l_view, r_view], dim=1)
-    inp, target = inp.to(device), target.to(device)
-    out = model(inp)
+    out = inference(model, data, device)
+    target = data["target"].to(device)
     loss = loss_fn(out, target)
-    # raise NotImplementedError("Function inference_and_cal_loss is not implemented yet, \
-    #     please rewrite the demo code and delete this error message.")
     return out, loss
 
 def cal_and_record_metrics(phase, epoch, output, target, metrics_logger, logger=None):
@@ -69,7 +84,27 @@ def cal_and_record_metrics(phase, epoch, output, target, metrics_logger, logger=
     batch_size = output.shape[0]
     for idx in range(batch_size):
         metrics_logger.cal_metrics(phase, epoch, target[idx], output[idx], data_range=1)
-    
+
+def save_image(output, mean, norm, path2file):
+    """
+    Info:
+        Save output to specific path.
+    Args:
+        - output (Tensor | ndarray): takes value from range [0, 1].
+        - mean (float):
+        - norm (float): 
+        - path2file (str | os.PathLike):
+    Returns:
+        - (bool): indicate succeed or not.
+    """
+    if isinstance(output, torch.Tensor):
+        output = output.numpy()
+    output = ((output.transpose((1, 2, 0)) * norm) + mean).astype(np.uint16)
+    try:
+        cv2.imwrite(path2file, output)
+        return True
+    except:
+        return False
 
 def resize(img: torch.Tensor, size: list or tuple, logger=None):
     """
@@ -122,6 +157,9 @@ def try_make_path_exists(path):
 def save_ckpt(path2file, logger=None, **ckpt):
     with log_info(msg="Save checkpoint to {}".format(path2file), level="INFO", state=True, logger=logger):
         torch.save(ckpt, path2file)
+
+def update_best_ckpt(path2file, metrics_logger, logger=None, **ckpt):
+    pass
 
 def pack_code(cfg, logger=None):
     src_dir = cfg.GENERAL.ROOT
