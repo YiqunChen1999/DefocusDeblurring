@@ -36,7 +36,7 @@ def train_one_epoch(
     log_info = print if logger is None else logger.log_info
     total_loss = []
     # TODO  Read data and train and record info.
-    with utils.log_info(msg="Train at epoch: {}".format(str(epoch).zfill(3)), level="INFO", state=True, logger=logger):
+    with utils.log_info(msg="Train at epoch: {}, lr: {:<5}".format(str(epoch).zfill(3), optimizer.param_groups[0]["lr"]), level="INFO", state=True, logger=logger):
         pbar = tqdm(total=len(data_loader), dynamic_ncols=True)
         for idx, data in enumerate(data_loader):
             optimizer.zero_grad()

@@ -50,6 +50,9 @@ class StepLRScheduler:
     def step(self):
         self.update()
 
+    def sychronize(self, epoch):
+        self.cnt = epoch + 1
+
 
 @add_scheduler
 class LinearLRScheduler:

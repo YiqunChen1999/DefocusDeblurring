@@ -43,7 +43,7 @@ cfg.MODEL.ARCH                                  =   None # TODO
 cfg.MODEL.ENCODER                               =   "DPDEncoder"
 cfg.MODEL.DECODER                               =   "DPDDecoder"
 cfg.MODEL.CKPT_DIR                              =   os.path.join(cfg.GENERAL.ROOT, "checkpoints", cfg.GENERAL.ID)
-cfg.MODEL.PATH2CKPT                             =   os.path.join(cfg.MODEL.CKPT_DIR, cfg.GENERAL.ID + ".pth")
+cfg.MODEL.PATH2CKPT                             =   os.path.join(cfg.MODEL.CKPT_DIR, os.listdir(cfg.MODEL.CKPT_DIR)[-1])
 
 # ================================ 
 # DATA

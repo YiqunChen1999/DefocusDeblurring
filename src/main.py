@@ -30,11 +30,15 @@ def main():
     # logger.log_model(model)
     # TODO Read checkpoint.
     ckpt = torch.load(cfg.MODEL.PATH2CKPT) if cfg.GENERAL.RESUME else {}
-    # TODO Load pre-trained model.
-    model = model.load_state_dict(ckpt["model"]) if cfg.GENERAL.RESUME else model
-    resume_epoch = ckpt["epoch"] if cfg.GENERAL.RESUME in ckpt.keys() else 0
+
+    if cfg.GENERAL.RESUME:
+        model.load_state_dict(ckpt["model"])
+
+    resume_epoch = ckpt["epoch"] if cfg.GENERAL.RESUME else 0
     optimizer = ckpt["optimizer"] if cfg.GENERAL.RESUME else optimizer_helper.build_optimizer(cfg=cfg, model=model)
-    lr_scheduler = ckpt["lr_scheduler"] if cfg.GENERAL.RESUME else lr_scheduler_helper.build_scheduler(cfg=cfg, optimizer=optimizer)
+    # lr_scheduler = ckpt["lr_scheduler"] if cfg.GENERAL.RESUME else lr_scheduler_helper.build_scheduler(cfg=cfg, optimizer=optimizer)
+    lr_scheduler = lr_scheduler_helper.build_scheduler(cfg=cfg, optimizer=optimizer)
+    lr_scheduler.sychronize(resume_epoch)
     loss_fn = ckpt["loss_fn"] if cfg.GENERAL.RESUME else loss_fn_helper.build_loss_fn(cfg=cfg)
     # TODO Set device.
     model, device = utils.set_device(model, cfg.GENERAL.GPU)
