@@ -43,15 +43,15 @@ cfg.MODEL.ARCH                                  =   None # TODO
 cfg.MODEL.ENCODER                               =   "DPDEncoder"
 cfg.MODEL.DECODER                               =   "DPDDecoder"
 cfg.MODEL.CKPT_DIR                              =   os.path.join(cfg.GENERAL.ROOT, "checkpoints", cfg.GENERAL.ID)
-cfg.MODEL.PATH2CKPT                             =   os.path.join(cfg.MODEL.CKPT_DIR, os.listdir(cfg.MODEL.CKPT_DIR)[-1])
+cfg.MODEL.PATH2CKPT                             =   os.path.join(cfg.MODEL.CKPT_DIR, sorted(os.listdir(cfg.MODEL.CKPT_DIR))[-1])
 
 # ================================ 
 # DATA
 # ================================ 
 cfg.DATA.DIR                                    =   {
-    # "DualPixelNTIRE2021": "/home/yqchen/Data/DualPixelNTIRE2021", 
-    "DualPixelNTIRE2021": "/mnt/g/Datasets/DualPixelNTIRE2021", 
-    # "DualPixelCanon": "/home/yqchen/Data/DualPixelCanon", 
+    "DualPixelNTIRE2021": "/home/yqchen/Data/DualPixelNTIRE2021", 
+    # "DualPixelNTIRE2021": "/mnt/g/Datasets/DualPixelNTIRE2021", 
+    "DualPixelCanon": "/home/yqchen/Data/DualPixelCanon", 
 }
 cfg.DATA.NUMWORKERS                             =   args.batch_size
 cfg.DATA.DATASET                                =   "DualPixelNTIRE2021"
@@ -86,7 +86,7 @@ cfg.LOSS_FN.LOSS_FN                             =   "MSELoss"
 # ================================ 
 # LOG
 # ================================ 
-cfg.SAVE.DIR                                    =   os.path.join(os.path.join(cfg.GENERAL.ROOT, "results", cfg.GENERAL.ID))
+cfg.SAVE.DIR                                    =   os.path.join(os.path.join(cfg.GENERAL.ROOT, "results", cfg.GENERAL.ID, cfg.DATA.DATASET))
 cfg.SAVE.SAVE                                   =   True
 
 # ================================ 

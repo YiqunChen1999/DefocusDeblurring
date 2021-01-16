@@ -36,16 +36,20 @@ def main():
         model.load_state_dict(ckpt["model"])
     resume_epoch = ckpt["epoch"] if cfg.GENERAL.RESUME else 0
     optimizer = ckpt["optimizer"] if cfg.GENERAL.RESUME else optimizer_helper.build_optimizer(cfg=cfg, model=model)
-    lr_scheduler = ckpt["lr_scheduler"] if cfg.GENERAL.RESUME else lr_scheduler_helper.build_scheduler(cfg=cfg, optimizer=optimizer)
-    # lr_scheduler = lr_scheduler_helper.build_scheduler(cfg=cfg, optimizer=optimizer)
-    # lr_scheduler.sychronize(resume_epoch)
+    # lr_scheduler = ckpt["lr_scheduler"] if cfg.GENERAL.RESUME else lr_scheduler_helper.build_scheduler(cfg=cfg, optimizer=optimizer)
+    lr_scheduler = lr_scheduler_helper.build_scheduler(cfg=cfg, optimizer=optimizer)
+    lr_scheduler.sychronize(resume_epoch)
     loss_fn = ckpt["loss_fn"] if cfg.GENERAL.RESUME else loss_fn_helper.build_loss_fn(cfg=cfg)
     
     # Set device.
     model, device = utils.set_device(model, cfg.GENERAL.GPU)
     
     # Prepare dataset.
-    train_data_loader = data_loader.build_data_loader(cfg, cfg.DATA.DATASET, "train")
+    if cfg.GENERAL.TRAIN:
+        try:
+            train_data_loader = data_loader.build_data_loader(cfg, cfg.DATA.DATASET, "train")
+        except:
+            logger.log_info("Cannot build train dataset.")
     if cfg.GENERAL.VALID:
         try:
             valid_data_loader = data_loader.build_data_loader(cfg, cfg.DATA.DATASET, "valid")
@@ -59,31 +63,37 @@ def main():
 
     # Train, evaluate model and save checkpoint.
     for epoch in range(cfg.TRAIN.MAX_EPOCH):
-        if resume_epoch > epoch:
+        if resume_epoch >= epoch:
             continue
 
-        train_one_epoch(
-            epoch=epoch,
-            cfg=cfg,  
-            model=model, 
-            data_loader=train_data_loader, 
-            device=device, 
-            loss_fn=loss_fn, 
-            optimizer=optimizer, 
-            lr_scheduler=lr_scheduler, 
-            metrics_logger=metrics_logger, 
-            logger=logger, 
-        )
-        utils.save_ckpt(
-            path2file=os.path.join(cfg.MODEL.CKPT_DIR, cfg.GENERAL.ID + "_" + str(epoch).zfill(3) + ".pth"), 
-            logger=logger, 
-            model=model.state_dict(), 
-            epoch=epoch, 
-            optimizer=optimizer, 
-            lr_scheduler=lr_scheduler, # NOTE Need attribdict>=0.0.5
-            loss_fn=loss_fn, 
-            metrics=metrics_logger, 
-        )
+        try:
+            train_one_epoch(
+                epoch=epoch,
+                cfg=cfg,  
+                model=model, 
+                data_loader=train_data_loader, 
+                device=device, 
+                loss_fn=loss_fn, 
+                optimizer=optimizer, 
+                lr_scheduler=lr_scheduler, 
+                metrics_logger=metrics_logger, 
+                logger=logger, 
+            )
+        except:
+            logger.log_info("Failed to train model.")
+        
+        optimizer.zero_grad()
+        with torch.no_grad():
+            utils.save_ckpt(
+                path2file=os.path.join(cfg.MODEL.CKPT_DIR, cfg.GENERAL.ID + "_" + str(epoch).zfill(3) + ".pth"), 
+                logger=logger, 
+                model=model.state_dict(), 
+                epoch=epoch, 
+                optimizer=optimizer, 
+                lr_scheduler=lr_scheduler, # NOTE Need attribdict>=0.0.5
+                loss_fn=loss_fn, 
+                metrics=metrics_logger, 
+            )
         try:
             evaluate(
                 epoch=epoch, 
@@ -100,7 +110,31 @@ def main():
         except:
             logger.log_info("Failed to evaluate model.")
 
+        with torch.no_grad():
+            utils.save_ckpt(
+                path2file=os.path.join(cfg.MODEL.CKPT_DIR, cfg.GENERAL.ID + "_" + str(epoch).zfill(3) + ".pth"), 
+                logger=logger, 
+                model=model.state_dict(), 
+                epoch=epoch, 
+                optimizer=optimizer, 
+                lr_scheduler=lr_scheduler, # NOTE Need attribdict>=0.0.5
+                loss_fn=loss_fn, 
+                metrics=metrics_logger, 
+            )
+
     # If test set has target images, evaluate and save them, otherwise just try to generate output images.
+    if cfg.DATA.DATASET == "DualPixelNTIRE2021":
+        try:
+            generate(
+                cfg=cfg,
+                model=model, 
+                data_loader=valid_data_loader, 
+                device=device, 
+                phase="valid", 
+                logger=logger, 
+            )
+        except:
+            logger.log_info("Failed to generate output images of valid set of NTIRE2021.")
     try:
         evaluate(
             epoch=epoch, 
@@ -122,10 +156,11 @@ def main():
                 model=model, 
                 data_loader=test_data_loader, 
                 device=device, 
+                phase="test", 
                 logger=logger, 
             )
         except:
-            logger.log_info("Cannot generate output images.")
+            logger.log_info("Cannot generate output images of test set.")
     return None
 
 

@@ -24,9 +24,13 @@ def build_data_loader(cfg, dataset, split):
     shuffle = True if split == "train" else False
     num_workers = cfg.DATA.NUMWORKERS
     dataset = build_dataset(cfg, dataset, split)
+    if split == "test" or (cfg.DATA.DATASET == "DualPixelNTIRE2021" and split == "valid"):
+        batch_size = 2
+    else:
+        batch_size = cfg.GENERAL.BATCH_SIZE
     data_loader = torch.utils.data.DataLoader(
         dataset=dataset, 
-        batch_size=cfg.GENERAL.BATCH_SIZE, 
+        batch_size=batch_size, 
         shuffle=shuffle, 
         num_workers=num_workers
     )

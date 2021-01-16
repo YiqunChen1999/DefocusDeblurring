@@ -175,7 +175,7 @@ class DualPixelNTIRE2021(torch.utils.data.Dataset):
         r_img_dict = {img.split(".")[0]: img for img in r_img_list}
 
         pbar = tqdm(total=len(t_img_list), dynamic_ncols=True)
-        for idx, img_idx in enumerate(t_img_dict.keys()):
+        for idx, img_idx in enumerate(l_img_dict.keys()):
             if img_idx == "":
                 continue
             if img_idx in l_img_dict.keys() and img_idx in r_img_dict.keys():

@@ -6,7 +6,7 @@ Docs:
     Functions to evaluate a model.
 """
 
-import os, sys
+import os, sys, time
 sys.path.append(os.path.join(sys.path[0], ".."))
 sys.path.append(os.path.join(os.getcwd(), "src"))
 import torch, torchvision
@@ -33,15 +33,18 @@ def evaluate(
     **kwargs, 
 ):
     model.eval()
-    # TODO  Prepare to log info.
+    # Prepare to log info.
     log_info = print if logger is None else logger.log_info
     total_loss = []
-    # TODO  Read data and evaluate and record info.
+    inference_time = []
+    # Read data and evaluate and record info.
     with utils.log_info(msg="{} at epoch: {}".format(phase.upper(), str(epoch).zfill(3)), level="INFO", state=True, logger=logger):
         # log_info("Will{}save results to {}".format(" " if save else " not ", cfg.SAVE.DIR))
         pbar = tqdm(total=len(data_loader), dynamic_ncols=True)
         for idx, data in enumerate(data_loader):
+            start_time = time.time()
             out, loss = utils.inference_and_cal_loss(model=model, data=data, loss_fn=loss_fn, device=device)
+            inference_time.append(time.time()-start_time)
             total_loss.append(loss.detach().cpu().item())
 
             if save:
@@ -63,7 +66,8 @@ def evaluate(
             pbar.set_description("Epoch: {:<3}, avg loss: {:<5}, cur loss: {:<5}".format(epoch, round(sum(total_loss)/len(total_loss), 5), round(total_loss[-1], 5)))
             pbar.update()
         pbar.close()
-    mean_metrics = metrics_logger.mean("valid", epoch)
+    log_info("Runtime per image: {:<5} seconds.".format(round(sum(inference_time)/len(inference_time), 4)))
+    mean_metrics = metrics_logger.mean(phase, epoch)
     log_info("SSIM: {:<5}, PSNR: {:<5}, MAE: {:<5}, Loss: {:<5}".format(
         mean_metrics["SSIM"], mean_metrics["PSNR"], mean_metrics["MAE"], mean_metrics["loss"], 
     ))
